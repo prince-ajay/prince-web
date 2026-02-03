@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PRINCE ULTIMATE STORE</title>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- LUXURY CSS VARIABLES --- */
+        :root {
+            --primary: #00ff88;
+            --accent: #00aaff;
+            --glass: rgba(20, 20, 20, 0.7);
+            --border: rgba(255, 255, 255, 0.1);
+            --glow: 0 0 15px rgba(0, 255, 136, 0.5);
+            --text-main: #ffffff;
+            --text-sec: #aaaaaa;
+            --bg-grad: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
+        }
+
+        /* --- GLOBAL RESET --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: var(--bg-grad);
+            color: var(--text-main);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* --- ANIMATED BACKGROUND (CANVAS) --- */
+        #particle-canvas {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
+        }
+
+        /* --- HEADER & STATUS BAR --- */
+        .glass-header {
+            width: 100%;
+            padding: 15px;
+            background: rgba(10, 10, 10, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+        }
+
+        .brand { font-family: 'Share Tech Mono', monospace; color: var(--primary); font-size: 1.2rem; text-shadow: var(--glow); font-weight: bold; letter-spacing: 2px; }
+        
+        .status-icons { display: flex; gap: 15px; font-size: 0.9rem; color: var(--text-sec); }
+        .icon { cursor: pointer; transition: 0.3s; }
+        .icon:hover { color: var(--primary); text-shadow: 0 0 5px var(--primary); }
+
+        /* --- MAIN CONTAINER --- */
+        #main-viewport {
+            width: 100%; max-width: 500px; height: 100%; position: relative;
+            display: flex; flex-direction: column; z-index: 1; overflow: hidden;
+        }
+
+        /* --- PAGES TRANSITIONS --- */
+        .page {
+            display: none; flex-direction: column; align-items: center; justify-content: flex-start;
+            height: 100%; width: 100%; padding: 20px; overflow-y: auto; overflow-x: hidden;
+            animation: slideUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        .active-page { display: flex; }
+        
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- UI ELEMENTS --- */
+        h1, h2, h3 { text-transform: uppercase; margin-bottom: 15px; letter-spacing: 1px; }
+        h2 { font-size: 1.5rem; background: linear-gradient(90deg, #fff, var(--primary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        /* --- GLASS INPUTS & BUTTONS --- */
+        .glass-input {
+            width: 100%; padding: 15px; margin-bottom: 20px;
+            background: rgba(255,255,255,0.05); border: 1px solid var(--primary);
+            border-radius: 8px; color: #fff; font-family: 'Share Tech Mono';
+            text-align: center; font-size: 1.1rem; outline: none; transition: 0.3s;
+        }
+        .glass-input:focus { background: rgba(0, 255, 136, 0.1); box-shadow: var(--glow); }
+
+        .neon-btn {
+            position: relative; padding: 12px 40px; background: transparent;
+            color: var(--primary); border: 2px solid var(--primary);
+            font-weight: bold; font-size: 1rem; cursor: pointer; overflow: hidden;
+            transition: 0.3s; text-transform: uppercase; letter-spacing: 2px;
+            clip-path: polygon(10% 0, 100% 0, 100% 70%, 90% 100%, 0 100%, 0 30%);
+        }
+        .neon-btn:hover { background: var(--primary); color: #000; box-shadow: var(--glow); }
+        .neon-btn:active { transform: scale(0.95); }
+
+        /* --- LOGIN FINGERPRINT (Feature 3) --- */
+        .fingerprint-container {
+            width: 80px; height: 80px; margin: 20px auto; border: 1px solid var(--primary);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; position: relative; overflow: hidden;
+        }
+        .scan-line {
+            width: 100%; height: 2px; background: var(--primary); position: absolute; top: 0;
+            box-shadow: 0 0 10px var(--primary); animation: scan 1.5s linear infinite; display: none;
+        }
+        @keyframes scan { 0% { top: 0; } 50% { top: 100%; } 100% { top: 0; } }
+
+        /* --- APP CARDS (Tilt Effect Feature 7) --- */
+        .app-grid { width: 100%; padding-bottom: 100px; }
+        .card-3d {
+            background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px); padding: 20px; margin-bottom: 20px;
+            border-radius: 15px; position: relative; transition: transform 0.1s;
+            transform-style: preserve-3d;
+        }
+        .card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .badge { background: var(--primary); color: #000; padding: 2px 8px; font-size: 0.7rem; font-weight: bold; border-radius: 4px; }
+        .card-desc { font-size: 0.85rem; color: #888; margin-bottom: 15px; line-height: 1.4; }
+
+        /* --- COMMENT SYSTEM (Feature 4) --- */
+        .comments-section { width: 100%; margin-top: 30px; border-top: 1px solid #333; padding-top: 20px; }
+        .comment-box { background: rgba(0,0,0,0.5); padding: 10px; border-radius: 8px; margin-bottom: 10px; border-left: 2px solid var(--primary); }
+        .c-user { color: var(--accent); font-weight: bold; font-size: 0.9rem; }
+        .c-text { font-size: 0.8rem; color: #ccc; margin-top: 5px; }
+        .rating-stars { color: gold; font-size: 1.2rem; cursor: pointer; margin: 10px 0; }
+
+        /* --- SYSTEM CONSOLE (Feature 8) --- */
+        #sys-console {
+            position: fixed; bottom: 30px; left: 0; width: 100%; height: 100px;
+            background: rgba(0,0,0,0.9); border-top: 1px solid var(--primary);
+            font-family: 'Share Tech Mono', monospace; font-size: 0.7rem; color: var(--primary);
+            padding: 10px; overflow-y: hidden; z-index: 50; pointer-events: none; opacity: 0.8;
+            mask-image: linear-gradient(to bottom, transparent, black 20%);
+        }
+        .log-line { margin-bottom: 2px; }
+
+        /* --- MODALS --- */
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95);
+            z-index: 2000; display: none; align-items: center; justify-content: center; flex-direction: column;
+        }
+        .modal-content {
+            background: #111; border: 1px solid var(--primary); padding: 30px; width: 85%;
+            text-align: center; border-radius: 15px; box-shadow: 0 0 50px rgba(0, 255, 136, 0.2);
+        }
+
+        /* --- SETTINGS PANEL (Feature 9) --- */
+        #settings-panel {
+            position: fixed; top: 60px; right: -250px; width: 220px; background: rgba(10,10,10,0.95);
+            border: 1px solid #333; border-left: 2px solid var(--accent); padding: 15px;
+            transition: 0.4s; z-index: 900; backdrop-filter: blur(10px);
+        }
+        .open-settings { right: 0 !important; }
+        .setting-row { display: flex; justify-content: space-between; margin-bottom: 15px; font-size: 0.8rem; }
+        .color-dot { width: 20px; height: 20px; border-radius: 50%; cursor: pointer; border: 1px solid #fff; }
+
+        /* --- FOOTER & HELP --- */
+        .footer { position: fixed; bottom: 0; width: 100%; text-align: center; font-size: 0.7rem; background: #000; color: #555; padding: 5px; z-index: 200; }
+        
+        #help-orb {
+            position: fixed; bottom: 140px; right: 20px; width: 50px; height: 50px;
+            background: radial-gradient(circle, var(--primary), transparent);
+            border: 1px solid var(--primary); border-radius: 50%; z-index: 1000;
+            display: flex; align-items: center; justify-content: center; font-weight: bold; color: #000;
+            box-shadow: 0 0 20px var(--primary); cursor: pointer; animation: pulse 2s infinite;
+        }
+        @keyframes pulse { 0% { box-shadow: 0 0 10px var(--primary); } 50% { box-shadow: 0 0 25px var(--primary); } 100% { box-shadow: 0 0 10px var(--primary); } }
+
+        /* --- LOADING SPINNER --- */
+        .cyber-loader {
+            width: 60px; height: 60px; border: 5px solid transparent; border-top: 5px solid var(--primary);
+            border-bottom: 5px solid var(--accent); border-radius: 50%; animation: spin 1s linear infinite;
+        }
+
+        /* --- INTERNET CHECK --- */
+        #net-error { position: fixed; top:0; left:0; width:100%; height:100%; background:#000; z-index:9999; display:none; flex-direction:column; align-items:center; justify-content:center; }
+    </style>
+</head>
+<body>
+
+    <canvas id="particle-canvas"></canvas>
+
+    <div id="net-error"><h1 style="color:red">CONNECTION LOST</h1><p>Reconnecting to satellite...</p></div>
+
+    <div class="glass-header">
+        <div class="brand">PRINCE<span style="color:var(--accent)">OS</span></div>
+        <div class="status-icons">
+            <span id="music-toggle" onclick="toggleMusic()">🎵 OFF</span>
+            <span onclick="toggleSettings()">⚙️</span>
+        </div>
+    </div>
+
+    <div id="settings-panel">
+        <h3>SYSTEM SETTINGS</h3><hr style="border-color:#333; margin:10px 0;"><br>
+        <div class="setting-row">
+            <span>Theme Color</span>
+            <div style="display:flex; gap:5px;">
+                <div class="color-dot" style="background:#00ff88" onclick="setTheme('#00ff88', '#00cc6a')"></div>
+                <div class="color-dot" style="background:#00aaff" onclick="setTheme('#00aaff', '#0077cc')"></div>
+                <div class="color-dot" style="background:#ff00ff" onclick="setTheme('#ff00ff', '#cc00cc')"></div>
+            </div>
+        </div>
+        <div class="setting-row">
+            <span>Voice Assistant</span>
+            <input type="checkbox" id="voice-toggle" checked>
+        </div>
+        <div class="setting-row">
+            <span>Particles</span>
+            <input type="checkbox" checked onclick="toggleParticles(this)">
+        </div>
+    </div>
+
+    <div id="main-viewport">
+
+        <div id="p-login" class="page active-page">
+            <div style="height: 50px;"></div>
+            <h2>IDENTITY VERIFICATION</h2>
+            <p style="margin-bottom:30px;">Secure Access Terminal v9.0</p>
+            
+            <input type="text" id="key-input" class="glass-input" placeholder="ENTER ACCESS KEY">
+            
+            <div class="fingerprint-container" onclick="attemptLogin()">
+                <div style="font-size:40px;">Fingerprint</div>
+                <div class="scan-line" id="scanner"></div>
+            </div>
+            <p id="login-msg" style="color:var(--primary); font-size:0.8rem; min-height:20px;"></p>
+
+            <div style="margin-top: 20px;">
+                <a onclick="openTelegram()" style="color:var(--accent); text-decoration:underline; cursor:pointer;">REQUEST KEY FROM ADMIN</a>
+            </div>
+        </div>
+
+        <div id="p-loading" class="page" style="justify-content:center;">
+            <div class="cyber-loader"></div>
+            <p style="margin-top:20px; font-family:'Share Tech Mono'">DECRYPTING DATA...</p>
+        </div>
+
+        <div id="p-terms" class="page">
+            <h2>USER AGREEMENT</h2>
+            <div style="text-align:left; background:rgba(0,0,0,0.5); padding:15px; border-radius:10px; border:1px solid #333; margin-bottom:20px;">
+                <p>1. Do not share keys.</p>
+                <p>2. Use for educational purposes only.</p>
+                <p>3. System is monitored.</p>
+            </div>
+            <div style="text-align:left; width:100%;">
+                <label><input type="checkbox" id="t1"> Accept Terms</label><br><br>
+                <label><input type="checkbox" id="t2"> Accept Privacy Policy</label>
+            </div>
+            <br>
+            <button class="neon-btn" onclick="checkTerms()">INITIALIZE</button>
+            <p id="terms-err" style="color:red; margin-top:10px;"></p>
+        </div>
+
+        <div id="p-typing" class="page" style="justify-content:center; align-items:flex-start;">
+            <div id="type-box" style="font-family:'Share Tech Mono'; color:var(--primary); font-size:1.1rem; white-space:pre-wrap;"></div>
+        </div>
+
+        <div id="p-apps" class="page">
+            <h2>SECURE REPOSITORY</h2>
+            <div class="app-grid">
+                
+                <div class="card-3d">
+                    <div class="card-head">
+                        <span class="brand">PHONEPE SOUND</span>
+                        <span class="badge">V1.0</span>
+                    </div>
+                    <div class="card-desc">Advanced sound box modification tool. Black edition with premium features enabled.</div>
+                    <button class="neon-btn" style="width:100%; font-size:0.8rem;" onclick="openDlModal('https://github.com/mrprince6300/princeofficial.gethub.io/releases/download/v1.0/PP.FREE.BLACK.apk')">DOWNLOAD ENCRYPTED</button>
+                </div>
+
+                <div class="card-3d">
+                    <div class="card-head">
+                        <span class="brand">PHONEPE SMS</span>
+                        <span class="badge">V2.0</span>
+                    </div>
+                    <div class="card-desc">Automated SMS handling system. High speed execution.</div>
+                    <button class="neon-btn" style="width:100%; font-size:0.8rem;" onclick="openDlModal('https://github.com/mrprince6300/princeofficial.gethub.io/releases/download/v2.0/PhonePe.apk')">DOWNLOAD ENCRYPTED</button>
+                </div>
+
+                <div class="card-3d">
+                    <div class="card-head">
+                        <span class="brand">GPAY PRO</span>
+                        <span class="badge">V3.0</span>
+                    </div>
+                    <div class="card-desc">Secure payment gateway tool. Pro version.</div>
+                    <button class="neon-btn" style="width:100%; font-size:0.8rem;" onclick="openDlModal('https://github.com/mrprince6300/princeofficial.gethub.io/releases/download/v3.0/GPay.apk')">DOWNLOAD ENCRYPTED</button>
+                </div>
+
+                <div class="card-3d">
+                    <div class="card-head">
+                        <span class="brand">GPAY SIMPLE</span>
+                        <span class="badge">V4.0</span>
+                    </div>
+                    <div class="card-desc">Lightweight version for older devices.</div>
+                    <button class="neon-btn" style="width:100%; font-size:0.8rem;" onclick="openDlModal('https://github.com/mrprince6300/princeofficial.gethub.io/releases/download/v4.0/GP.apk')">DOWNLOAD ENCRYPTED</button>
+                </div>
+
+                <div class="comments-section">
+                    <h3>USER FEEDBACK</h3>
+                    <div id="rating-stars" class="rating-stars">★★★★★</div>
+                    <input type="text" id="c-name" placeholder="Your Name" class="glass-input" style="padding:10px; font-size:0.9rem;">
+                    <input type="text" id="c-msg" placeholder="Write a comment..." class="glass-input" style="padding:10px; font-size:0.9rem;">
+                    <button class="neon-btn" onclick="postComment()" style="width:100%; font-size:0.8rem; padding:10px;">POST REVIEW</button>
+                    
+                    <div id="comments-list" style="margin-top:20px;">
+                        </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="sys-console"></div>
+
+    <div id="dl-modal" class="modal">
+        <div class="modal-content">
+            <h3 style="color:var(--accent)">DECRYPTION REQUIRED</h3>
+            <p style="color:#888; margin-bottom:15px;">Enter the App Specific Key</p>
+            <input type="text" id="dl-key" class="glass-input" placeholder="Key (address_...)">
+            <button class="neon-btn" onclick="verifyDlKey()">UNLOCK</button>
+            <div id="dl-err" style="color:var(--primary); height:20px; margin-top:5px;"></div>
+            <p onclick="closeDlModal()" style="margin-top:15px; color:#555; cursor:pointer;">CANCEL</p>
+        </div>
+    </div>
+
+    <div id="help-orb" onclick="openTelegram()">HELP</div>
+
+    <div class="footer">Prince Systems © 2026 | Ultimate Edition</div>
+
+    <script>
+        /* --- CONFIG --- */
+        const LOGIN_KEY = "address_meerut";
+        const APP_KEY = "address_lisari";
+        const ADMIN_TG = "Ajay63001";
+        let pendingDlUrl = "";
+        let musicPlaying = false;
+
+        /* --- SOUND ENGINE (Feature 6) --- */
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playSound(type) {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            if(type === 'click') {
+                osc.frequency.value = 1200;
+                osc.type = 'sine';
+                gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+            } else if(type === 'error') {
+                osc.frequency.value = 150;
+                osc.type = 'sawtooth';
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+            } else if(type === 'success') {
+                osc.frequency.value = 600;
+                osc.type = 'triangle';
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.2);
+                gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.5);
+            }
+        }
+
+        /* --- TEXT TO SPEECH (Feature 5) --- */
+        function speak(text) {
+            if(!document.getElementById('voice-toggle').checked) return;
+            const u = new SpeechSynthesisUtterance(text);
+            u.rate = 1; u.pitch = 0.8;
+            window.speechSynthesis.speak(u);
+        }
+
+        /* --- SYSTEM LOGS (Feature 8) --- */
+        function log(msg) {
+            const c = document.getElementById('sys-console');
+            const l = document.createElement('div');
+            l.className = 'log-line';
+            l.innerText = `> ${new Date().toLocaleTimeString()} : ${msg}`;
+            c.insertBefore(l, c.firstChild);
+            if(c.children.length > 5) c.removeChild(c.lastChild);
+        }
+
+        /* --- NAV LOGIC --- */
+        function switchPage(id) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
+            document.getElementById(id).classList.add('active-page');
+            playSound('click');
+        }
+
+        function openTelegram() {
+            window.open(`https://t.me/${ADMIN_TG}`, '_blank');
+        }
+
+        /* --- LOGIN PAGE --- */
+        function attemptLogin() {
+            const k = document.getElementById('key-input').value.trim();
+            const scanner = document.getElementById('scanner');
+            
+            log("INITIATING LOGIN SEQUENCE...");
+            scanner.style.display = 'block';
+            playSound('click');
+
+            setTimeout(() => {
+                scanner.style.display = 'none';
+                if(k === LOGIN_KEY) {
+                    playSound('success');
+                    log("LOGIN SUCCESSFUL");
+                    speak("Access Granted. Welcome to Prince Systems.");
+                    switchPage('p-loading');
+                    setTimeout(() => switchPage('p-terms'), 4000);
+                } else {
+                    playSound('error');
+                    log("LOGIN FAILED: INVALID KEY");
+                    document.getElementById('login-msg').innerText = "ACCESS DENIED";
+                    speak("Access Denied.");
+                }
+            }, 1500);
+        }
+
+        /* --- TERMS PAGE --- */
+        function checkTerms() {
+            if(document.getElementById('t1').checked && document.getElementById('t2').checked) {
+                switchPage('p-typing');
+                startTyping();
+            } else {
+                playSound('error');
+                document.getElementById('terms-err').innerText = "ACCEPT ALL TERMS";
+            }
+        }
+
+        /* --- TYPING ANIMATION --- */
+        function startTyping() {
+            const text = "ESTABLISHING SECURE CONNECTION...\n\nBYPASSING FIREWALLS...\n\nLOADING ENCRYPTED MODULES...\n\nSYSTEM READY.";
+            const el = document.getElementById('type-box');
+            let i = 0;
+            el.innerText = "";
+            log("RUNNING SCRIPT...");
+            
+            const int = setInterval(() => {
+                el.innerText += text.charAt(i);
+                i++;
+                if(i >= text.length) {
+                    clearInterval(int);
+                    setTimeout(() => switchPage('p-apps'), 2000);
+                }
+            }, 40);
+        }
+
+        /* --- DOWNLOAD & KEY MODAL --- */
+        function openDlModal(url) {
+            pendingDlUrl = url;
+            document.getElementById('dl-modal').style.display = 'flex';
+            document.getElementById('dl-key').value = "";
+            document.getElementById('dl-err').innerText = "";
+            playSound('click');
+        }
+
+        function closeDlModal() {
+            document.getElementById('dl-modal').style.display = 'none';
+        }
+
+        function verifyDlKey() {
+            const k = document.getElementById('dl-key').value.trim();
+            if(k === APP_KEY) {
+                playSound('success');
+                document.getElementById('dl-err').innerText = "KEY ACCEPTED - DOWNLOADING...";
+                log("DECRYPTION KEY ACCEPTED");
+                
+                // Copy Hidden Text
+                navigator.clipboard.writeText("L&D ADDMI KYA JANE SKULL STUFF KYA HE !");
+                
+                setTimeout(() => {
+                    window.location.href = pendingDlUrl;
+                    closeDlModal();
+                }, 1500);
+            } else {
+                playSound('error');
+                document.getElementById('dl-err').innerText = "INVALID KEY";
+                log("DECRYPTION FAILED");
+            }
+        }
+
+        /* --- COMMENT SYSTEM (Feature 4) --- */
+        // Load Comments
+        const defaultComments = [
+            {name: "CyberUser", msg: "Works perfectly. Thanks Prince!", stars: 5},
+            {name: "Admin", msg: "Update v4.0 is live now.", stars: 5}
+        ];
+        
+        function loadComments() {
+            const list = document.getElementById('comments-list');
+            list.innerHTML = "";
+            const stored = JSON.parse(localStorage.getItem('prince_comments')) || defaultComments;
+            
+            stored.forEach(c => {
+                list.innerHTML += `
+                    <div class="comment-box">
+                        <div class="c-user">${c.name} <span style="color:gold">${"★".repeat(c.stars)}</span></div>
+                        <div class="c-text">${c.msg}</div>
+                    </div>`;
+            });
+        }
+        loadComments();
+
+        function postComment() {
+            const name = document.getElementById('c-name').value;
+            const msg = document.getElementById('c-msg').value;
+            if(!name || !msg) return alert("Fill all fields");
+            
+            const stored = JSON.parse(localStorage.getItem('prince_comments')) || defaultComments;
+            stored.unshift({name: name, msg: msg, stars: 5});
+            localStorage.setItem('prince_comments', JSON.stringify(stored));
+            
+            loadComments();
+            document.getElementById('c-msg').value = "";
+            playSound('success');
+            log("COMMENT POSTED");
+        }
+
+        /* --- SETTINGS & THEME (Feature 9) --- */
+        function toggleSettings() {
+            document.getElementById('settings-panel').classList.toggle('open-settings');
+        }
+        function setTheme(primary, secondary) {
+            document.documentElement.style.setProperty('--primary', primary);
+            document.documentElement.style.setProperty('--accent', secondary);
+            document.documentElement.style.setProperty('--glow', `0 0 15px ${primary}80`);
+            playSound('click');
+        }
+        function toggleMusic() {
+            musicPlaying = !musicPlaying;
+            document.getElementById('music-toggle').innerText = musicPlaying ? "🎵 ON" : "🎵 OFF";
+            log(musicPlaying ? "MUSIC MODULE LOADED" : "MUSIC STOPPED");
+        }
+
+        /* --- PARTICLE BACKGROUND (Feature 2) --- */
+        const canvas = document.getElementById('particle-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        
+        function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        window.addEventListener('resize', resize);
+        resize();
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.vx = (Math.random() - 0.5) * 1;
+                this.vy = (Math.random() - 0.5) * 1;
+                this.size = Math.random() * 2;
+            }
+            update() {
+                this.x += this.vx; this.y += this.vy;
+                if(this.x < 0 || this.x > canvas.width) this.vx *= -1;
+                if(this.y < 0 || this.y > canvas.height) this.vy *= -1;
+            }
+            draw() {
+                ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--primary');
+                ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI*2); ctx.fill();
+            }
+        }
+
+        function initParticles() {
+            particles = [];
+            for(let i=0; i<60; i++) particles.push(new Particle());
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            particles.forEach(p => {
+                p.update(); p.draw();
+                // Connect particles
+                particles.forEach(p2 => {
+                    const dx = p.x - p2.x; const dy = p.y - p2.y;
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+                    if(dist < 100) {
+                        ctx.strokeStyle = `rgba(0, 255, 136, ${1 - dist/100})`;
+                        ctx.lineWidth = 0.5;
+                        ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+                    }
+                });
+            });
+            requestAnimationFrame(animateParticles);
+        }
+        
+        initParticles();
+        animateParticles();
+
+        /* --- 3D TILT EFFECT (Feature 7) --- */
+        document.querySelectorAll('.card-3d').forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                card.style.transform = `perspective(1000px) rotateX(${(y - rect.height/2) / 10}deg) rotateY(${-(x - rect.width/2) / 10}deg)`;
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0)';
+            });
+        });
+
+        /* --- INTERNET CHECK --- */
+        window.addEventListener('offline', () => document.getElementById('net-error').style.display = 'flex');
+        window.addEventListener('online', () => document.getElementById('net-error').style.display = 'none');
+
+    </script>
+</body>
+</html>
